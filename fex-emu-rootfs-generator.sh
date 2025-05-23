@@ -37,7 +37,7 @@ After=$units
 What=overlay
 Where=/run/fex-emu/rootfs
 Type=overlay
-Options=lowerdir=$(echo $mounts|tr ' ' :),upperdir=/run/fex-emu/writable,workdir=/run/fex-emu/workdir
+Options=lowerdir=$(echo $mounts|tr ' ' '\n' | tac | tr '\n' :|sed -e 's/.$//'),upperdir=/run/fex-emu/writable,workdir=/run/fex-emu/workdir
 
 [Install]
 WantedBy=multi-user.target
