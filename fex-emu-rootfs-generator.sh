@@ -12,7 +12,7 @@ units=""
 mounts=""
 for layer in $layers; do
   name="$(basename $layer .erofs)"
-  mount=/run/fex-emu/layers/$name
+  mount=/var/lib/fex-emu/layers/$name
   unit="$(systemd-escape $mount --path --suffix mount)"
   cat > $dest/$unit <<EOF
 [Unit]
@@ -26,7 +26,7 @@ EOF
   [ -z "$mounts" ] && mounts=$mount || mounts="$mounts $mount"
 done
 
-rootfs=$(systemd-escape /run/fex-emu/rootfs --path --suffix mount)
+rootfs=$(systemd-escape /var/lib/fex-emu/rootfs --path --suffix mount)
 cat > $dest/$rootfs <<EOF
 [Unit]
 Description=FEX RootFS
@@ -35,7 +35,7 @@ After=$units
 
 [Mount]
 What=overlay
-Where=/run/fex-emu/rootfs
+Where=/var/lib/fex-emu/rootfs
 Type=overlay
 Options=lowerdir=$(echo $mounts|tr ' ' '\n' | tac | tr '\n' :|sed -e 's/.$//'),upperdir=/run/fex-emu/writable,workdir=/run/fex-emu/workdir
 
