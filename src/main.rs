@@ -105,3 +105,15 @@ WantedBy=multi-user.target",
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_systemd_escape_path() {
+        let path = Path::new("/foo/bar/fex-emu/rootfs");
+        let escaped = systemd_escape_path(path);
+        assert_eq!(escaped, "foo-bar-fex\\x2demu-rootfs.mount");
+    }
+}
