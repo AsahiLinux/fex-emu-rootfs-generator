@@ -4,8 +4,7 @@ use std::fs::{create_dir_all, read_dir};
 use std::io::Write;
 use std::path::Path;
 
-//static LAYERS_DIR: &str = "/usr/share/fex-emu/layers";
-static LAYERS_DIR: &str = "/tmp/foo/layers";
+static LAYERS_DIR: &str = "/usr/share/fex-emu/layers";
 static MOUNTS_DIR: &str = "/var/lib/fex-emu/layers";
 static ROOTFS_DIR: &str = "/var/lib/fex-emu/rootfs";
 static WORK_DIR: &str = "/var/lib/fex-emu/workdir";
@@ -33,7 +32,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         layers.insert(stem, layer);
     }
 
-    println!("{:?}", layers);
+    //println!("{:?}", layers);
 
     let mounts_path = Path::new(MOUNTS_DIR);
 
@@ -41,7 +40,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for (stem, _) in &layers {
         units.insert(stem, systemd_escape_path(mounts_path.join(stem).as_path()));
     }
-    println!("{:?}", units);
+    //println!("{:?}", units);
 
     for (stem, unit) in &units {
         let unit_path = dest_path.join(&unit);
@@ -62,19 +61,19 @@ Where={}",
 
     let mut stems: Vec<_> = layers.keys().collect::<Vec<_>>();
     stems.sort();
-    println!("{:?}", stems);
+    //println!("{:?}", stems);
 
     let rootfs_unit_name = systemd_escape_path(Path::new(ROOTFS_DIR));
     let rootfs_unit_path = dest_path.join(&rootfs_unit_name);
     let mut rootfs_unit = File::create(&rootfs_unit_path).unwrap();
     let rootfs_unit_deps: Vec<_> = stems.iter().map(|stem| units[stem].clone()).collect();
-    println!("{:?}", rootfs_unit_deps);
+    //println!("{:?}", rootfs_unit_deps);
     stems.reverse();
     let overlay_mounts: Vec<_> = stems
         .iter()
         .map(|stem| mounts_path.join(stem).to_string_lossy().to_string())
         .collect();
-    println!("{:?}", overlay_mounts);
+    //println!("{:?}", overlay_mounts);
 
     writeln!(
         rootfs_unit,
