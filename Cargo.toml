@@ -11,4 +11,6 @@ categories = ["emulators"]
 keywords = ["asahi"]
 
 [dependencies]
+env_logger = "0.11.8"
 libsystemd = "0.7.2"
+log = "0.4.27"

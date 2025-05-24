@@ -4,6 +4,9 @@ use std::fs::{create_dir_all, read_dir};
 use std::io::Write;
 use std::path::Path;
 
+#[allow(unused_imports)]
+use log::{debug, error, info, trace, warn};
+
 static LAYERS_DIR: &str = "/usr/share/fex-emu/layers";
 static MOUNTS_DIR: &str = "/var/lib/fex-emu/layers";
 static ROOTFS_DIR: &str = "/var/lib/fex-emu/rootfs";
@@ -18,8 +21,18 @@ fn systemd_escape_path(name: &Path) -> String {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Setup logging; we use SYSTEMD_LOG_LEVEL as that's the convention for
+    // generators per systemd.generator(7)
+    let logger_env = env_logger::Env::default().filter_or("SYSTEMD_LOG_LEVEL", "info");
+
+    env_logger::Builder::from_env(logger_env)
+        .format_level(false)
+        .format_timestamp(None)
+        .init();
+
     // /path/to/generator normal-dir [early-dir] [late-dir]
     let args: Vec<String> = std::env::args().collect();
+    trace!("Args: {:?}", args);
     let dest_path = Path::new(&args[1]);
     let mut layers = HashMap::new();
 
@@ -32,7 +45,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         layers.insert(stem, layer);
     }
 
-    //println!("{:?}", layers);
+    trace!("layers = {:?}", layers);
 
     let mounts_path = Path::new(MOUNTS_DIR);
 
@@ -40,7 +53,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for (stem, _) in &layers {
         units.insert(stem, systemd_escape_path(mounts_path.join(stem).as_path()));
     }
-    //println!("{:?}", units);
+    trace!("units = {:?}", units);
 
     for (stem, unit) in &units {
         let unit_path = dest_path.join(&unit);
@@ -61,19 +74,19 @@ Where={}",
 
     let mut stems: Vec<_> = layers.keys().collect::<Vec<_>>();
     stems.sort();
-    //println!("{:?}", stems);
+    trace!("stems = {:?}", stems);
 
     let rootfs_unit_name = systemd_escape_path(Path::new(ROOTFS_DIR));
     let rootfs_unit_path = dest_path.join(&rootfs_unit_name);
     let mut rootfs_unit = File::create(&rootfs_unit_path).unwrap();
     let rootfs_unit_deps: Vec<_> = stems.iter().map(|stem| units[stem].clone()).collect();
-    //println!("{:?}", rootfs_unit_deps);
+    trace!("rootfs_unit_deps = {:?}", rootfs_unit_deps);
     stems.reverse();
     let overlay_mounts: Vec<_> = stems
         .iter()
         .map(|stem| mounts_path.join(stem).to_string_lossy().to_string())
         .collect();
-    //println!("{:?}", overlay_mounts);
+    trace!("overlay_mounts = {:?}", overlay_mounts);
 
     writeln!(
         rootfs_unit,
